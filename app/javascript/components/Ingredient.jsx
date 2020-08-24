@@ -1,18 +1,17 @@
 import React from "react"
-import IngredientButton from './IngredientButton';
+import Select from 'react-select'
 
-const Ingredient = ({ ingredients }) => {
+const options = [
+  { value: 'chocolate', label: 'Chocolate' },
+  { value: 'strawberry', label: 'Strawberry' },
+  { value: 'vanilla', label: 'Vanilla' }
+]
+
+const Ingredient = ({  }) => {
   return (
     <React.Fragment>
-      {
-        ingredients.map((ingredient, index) => (
-          <IngredientButton key={index} name={ingredient.name }>
-
-          </IngredientButton>
-        ))
-      }
+      <Select options={options} />
     </React.Fragment>
   );
 }
-
 export default Ingredient
