@@ -1,57 +1,73 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import AsyncSelect from "react-select/async";
+import Recipe from "./Recipe"
 
+const AutoCompleteSelect= () => {
+  const [focus, setFocus] = useState(false);
+  const [multiValue, setMultiValue] = useState(null);
+  const [recipes, setRecipes] = useState(null);
+  const [hasError, setError] = useState(false);
 
-class AutoCompleteSelect extends React.Component {
-  state = {
-    focus: false,
-    multiValue: [],
-    recipes: null
-  };
+  const onFocus = () => setFocus(true)
+  const onBlur = () => setFocus(false)
 
-  onFocus = () => this.setState({ focus: true });
-  onBlur = () => this.setState({ focus: false });
-
-  handleMultiChange = (option) => {
-    this.setState({ multiValue: option });
-  }
-
-
-  loadOptions = (inputValue) => {
+  const loadOptions = (inputValue) => {
     const url = `/ingredients?format=json&search=${inputValue}`;
     return fetch(url, { method: "GET" }).then(data => data.json())
   };
 
-  findRecipe = () => { 
-    const url = `/recipes/find_recipes`;
-    const body = JSON.stringify({
-      ingredients: this.state.multiValue.map(a => a.selectedValue)
-    });
-    return fetch(url, { method: "GET", body }).then(data => this.setState({ recipes: data.json() }))
+  const handleMultiChange = (option) => {
+    setMultiValue(option);
   }
 
+  useEffect(() => {
+    findRecipe();
+  }, [multiValue]);
 
-  render() {
-    return (
-      <React.Fragment>
-        <AsyncSelect
-          name="Ingrédients"
-          placeholder="Tapez vos ingrédients"
-          value={ this.state.multiValue }
-          loadOptions={this.loadOptions}
-          onFocus={this.onFocus}
-          isMulti={true}
-          onBlur={this.onBlur}
-          onChange={this.handleMultiChange}
-          blurInputOnSelect={true}
-          getOptionValue={(option) => option["selectedValue"]}
-        />
-        <button onClick={this.findRecipe}>
-          Trouvez votre recette
-        </button>
-      </React.Fragment>
-    );
-  }
+  const findRecipe = async () => {
+    if (multiValue) {
+      setError(false);
+      const ingredientsId = multiValue.map(a => a.selectedValue)
+      console.log(ingredientsId);
+      const url = `/recipes/find_recipes?ingredients=${ingredientsId}`;
+      const response = await fetch(url);
+      if (response.ok) {
+        setRecipes(await response.json());
+      } else {
+        setError(true);
+      }
+      return [hasError, recipes];
+    } else {
+      setRecipes(null)
+    }
+  };
+
+  return (
+    <React.Fragment>
+      <AsyncSelect
+        name="Ingrédients"
+        placeholder="Tapez vos ingrédients"
+        value={ multiValue }
+        loadOptions={loadOptions}
+        onFocus={onFocus}
+        isMulti={true}
+        onBlur={onBlur}
+        onChange={handleMultiChange}
+        blurInputOnSelect={true}
+        getOptionValue={(option) => option["selectedValue"]}
+      />
+      {
+        recipes && (
+            recipes.map((recipe, index) => (
+              <div key={index}>
+                { recipe.name }
+              </div>
+            )
+          )
+        )
+      }
+    </React.Fragment>
+  );
 }
 
 export default AutoCompleteSelect;
