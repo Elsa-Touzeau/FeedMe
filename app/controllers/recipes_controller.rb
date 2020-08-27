@@ -3,7 +3,8 @@ class RecipesController < ApplicationController
   end
 
   def find_recipes
-    recipes = Recipe.joins(:ingredients).where('ingredients.id IN (?)', params[:ingredients].split(','))
+    ingredient_ids = params[:ingredients].split(',').sort()
+    recipes = Recipe.joins(:ingredients).where(ingredients: {id: ingredient_ids}).group('recipes.id').having('count(*) = ?', ingredient_ids.count)
 
     render json: recipes.map { |recipe| { name: recipe.name } }
   end
